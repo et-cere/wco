@@ -1,0 +1,22 @@
+[
+  {
+    "id": "stressor-heatwave-eu-2025",
+    "label": "Extreme heatwaves affecting major cities",
+    "country": "FR",
+    "region": "Europe",
+    "category": "climate",
+    "severity": "high",
+    "wco_slot": "climate-urban-heat",
+    "signals": 12
+  },
+  {
+    "id": "stressor-water-scarcity-sa",
+    "label": "Water scarcity in semi-arid regions",
+    "country": "ZA",
+    "region": "Africa",
+    "category": "water",
+    "severity": "medium",
+    "wco_slot": "water-stress",
+    "signals": 7
+  }
+]

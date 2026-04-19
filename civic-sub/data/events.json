@@ -1,0 +1,11 @@
+[
+  {
+    "id": "event-001",
+    "type": "meeting",
+    "title": "Climate Protocol Working Session",
+    "topic": "topic-climate",
+    "start": "2026-04-20T15:00:00Z",
+    "end": "2026-04-20T17:00:00Z",
+    "participants": ["actor-lab", "actor-un", "actor-city"]
+  }
+]

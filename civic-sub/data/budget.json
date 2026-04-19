@@ -1,0 +1,9 @@
+[
+  {
+    "id": "budget-001",
+    "item": "Climate Protocol Research",
+    "amount": 250000,
+    "currency": "USD",
+    "allocated_to": "actor-lab"
+  }
+]

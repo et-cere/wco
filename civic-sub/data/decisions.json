@@ -1,0 +1,10 @@
+[
+  {
+    "id": "decision-001",
+    "proposal": "proposal-001",
+    "outcome": "approved",
+    "timestamp": "2026-04-22T10:00:00Z",
+    "votes_for": 12,
+    "votes_against": 3
+  }
+]

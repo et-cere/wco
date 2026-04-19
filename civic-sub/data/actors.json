@@ -1,0 +1,20 @@
+[
+  {
+    "id": "actor-lab",
+    "name": "Systems Lab",
+    "roles": ["facilitator", "research"],
+    "affiliations": []
+  },
+  {
+    "id": "actor-un",
+    "name": "UN Climate Office",
+    "roles": ["observer"],
+    "affiliations": []
+  },
+  {
+    "id": "actor-city",
+    "name": "City of Irvine",
+    "roles": ["local-government"],
+    "affiliations": []
+  }
+]

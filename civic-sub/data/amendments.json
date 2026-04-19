@@ -1,0 +1,9 @@
+[
+  {
+    "id": "amendment-001",
+    "proposal": "proposal-001",
+    "description": "Add municipal exemptions for populations under 50k.",
+    "status": "proposed",
+    "author": "actor-city"
+  }
+]

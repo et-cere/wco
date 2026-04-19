@@ -1,0 +1,8 @@
+[
+  {
+    "id": "process-001",
+    "title": "Climate Protocol Drafting",
+    "steps": ["step-001", "step-002"],
+    "owner": "actor-lab"
+  }
+]

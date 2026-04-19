@@ -1,0 +1,9 @@
+[
+  {
+    "id": "doc-001",
+    "title": "Carbon Transparency Protocol Draft v0.1",
+    "type": "document",
+    "url": "documents/protocol-v0.1.pdf",
+    "related_proposal": "proposal-001"
+  }
+]

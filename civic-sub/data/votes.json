@@ -1,0 +1,9 @@
+[
+  {
+    "id": "vote-001",
+    "decision": "decision-001",
+    "voter": "actor-un",
+    "choice": "for",
+    "weight": 1
+  }
+]

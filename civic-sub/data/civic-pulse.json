@@ -1,0 +1,24 @@
+[
+  {
+    "id": "signal-001",
+    "source": "extension",
+    "kind": "local-issue",
+    "title": "Noise pollution near school",
+    "location": "Irvine, CA",
+    "tags": ["environment", "health"],
+    "linked_topic": null,
+    "linked_proposal": null,
+    "timestamp": "2025-04-17T10:00:00Z"
+  },
+  {
+    "id": "signal-002",
+    "source": "upload",
+    "kind": "policy-change",
+    "title": "New zoning regulation draft",
+    "location": "Barcelona",
+    "tags": ["housing", "planning"],
+    "linked_topic": "housing-affordability",
+    "linked_proposal": "proposal-123",
+    "timestamp": "2025-04-16T18:30:00Z"
+  }
+]
