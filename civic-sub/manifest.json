@@ -1,0 +1,54 @@
+{
+  "$id": "civic-substrate-manifest",
+  "version": "1.0.0",
+  "description": "File-based civic substrate with extensible types and adapters.",
+  "type_groups": {
+    "core": [
+      "topic",
+      "proposal",
+      "event",
+      "decision",
+      "comment"
+    ],
+    "actors": [
+      "actor",
+      "organization",
+      "working-group",
+      "role",
+      "mandate"
+    ],
+    "processes": [
+      "process",
+      "meeting",
+      "timeline",
+      "step",
+      "delegation"
+    ],
+    "governance": [
+      "vote",
+      "petition",
+      "amendment",
+      "budget-item",
+      "jurisdiction",
+      "constituency"
+    ],
+    "artifacts": [
+      "document",
+      "attachment",
+      "reference",
+      "tag"
+    ],
+    "wco": [
+      "wco-country",
+      "wco-slot",
+      "wco-node",
+      "wco-link"
+    ]
+  },
+  "paths": {
+    "types": "substrate/types",
+    "adapters": "substrate/adapters",
+    "data": "data"
+  },
+  "extensible": true
+}

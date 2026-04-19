@@ -1,0 +1,87 @@
+civic-substrate/
+  index.html
+  app.js
+  style.css
+  substrate-extension-config.json
+
+  substrate/
+    manifest.json
+
+    types/
+      core/
+        topic.json
+        proposal.json
+        event.json
+        decision.json
+        comment.json
+
+      actors/
+        actor.json
+        organization.json
+        working-group.json
+        role.json
+        mandate.json
+
+      processes/
+        process.json
+        meeting.json
+        timeline.json
+        step.json
+        delegation.json
+
+      governance/
+        vote.json
+        petition.json
+        amendment.json
+        budget-item.json
+        jurisdiction.json
+        constituency.json
+
+      artifacts/
+        document.json
+        attachment.json
+        reference.json
+        tag.json
+
+      wco/
+        wco-country.json
+        wco-slot.json
+        wco-node.json
+        wco-link.json
+
+    adapters/
+      democracyos.json
+      decidim.json
+      polis.json
+      osm.json
+      wco.json
+
+	adapters/ingest/
+	decidim.js
+	democracyos.js
+	index.js
+	osm.js
+	polis.js
+	wso.js
+
+  data/
+    topics.json
+    proposals.json
+    events.json
+    actors.json
+    decisions.json
+generative-advanced
+    comments.json
+    processes.json
+    votes.json
+    petitions.json
+    amendments.json
+    budget.json
+    documents.json
+
+   engine/
+linker.js
+generative.js
+generative-advanced.js
+
+  readmeA.txt

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Civic Substrate / WCO Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="app-title">
+        <span class="app-title-main">Civic Substrate</span>
+        <span class="app-title-sub">WCO Civic Graph & Pulse</span>
+      </div>
+      <div class="app-header-actions">
+        <button id="btn-import-json">Import JSON</button>
+        <button id="btn-run-engine">Run Generative Engine</button>
+        <button id="btn-export">Export Snapshot</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <nav class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Explore</div>
+          <button class="nav-item" data-view="topics">Topics</button>
+          <button class="nav-item" data-view="proposals">Proposals</button>
+          <button class="nav-item" data-view="actors">Actors</button>
+          <button class="nav-item" data-view="processes">Processes</button>
+          <button class="nav-item" data-view="decisions">Decisions</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">WCO</div>
+          <button class="nav-item" data-view="wco-overview">WCO Overview</button>
+          <button class="nav-item" data-view="wco-stressor-map">Stressor Map</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Civic Pulse</div>
+          <button class="nav-item" data-view="civic-pulse">Signals</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Tools</div>
+          <button class="nav-item" data-view="graph">Graph View</button>
+          <button class="nav-item" data-view="timeline">Timeline</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Search</div>
+          <input id="search-input" type="text" placeholder="Search topics, proposals, actors..." />
+        </div>
+      </nav>
+
+      <main class="main-panel">
+        <div id="view-header" class="view-header">
+          <h1 id="view-title">Welcome</h1>
+          <p id="view-subtitle">Select a view from the left to explore the civic substrate.</p>
+        </div>
+
+        <section id="view-content" class="view-content">
+          <!-- dynamic content injected by app.js -->
+        </section>
+      </main>
+
+      <aside class="context-panel">
+        <div class="context-header">
+          <h2>Details</h2>
+        </div>
+        <div id="context-content" class="context-content">
+          <p>Select an item to see details, relationships, and timelines.</p>
+        </div>
+      </aside>
+    </div>
+
+    <input id="file-input" type="file" accept="application/json" style="display:none" />
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+let p2p = {
+  webrtc: null,
+  merge: null,
+};
+
+(async function initP2P() {
+  try {
+    const [{ P2PWebRTC }, { applyDeltaToState }] = await Promise.all([
+      import("./p2p/webrtc.js"),
+      import("./p2p/merge.js"),
+    ]);
+
+    p2p.merge = applyDeltaToState;
+    p2p.webrtc = new P2PWebRTC({
+      onDelta: async (delta) => {
+        await p2p.merge(delta, state.data);
+        if (state.currentView) setView(state.currentView);
+      },
+    });
+
+    console.log("[P2P] WebRTC + merge initialized (signaling still TODO).");
+  } catch (e) {
+    console.log("[P2P] Optional p2p modules not present or failed to load.", e);
+  }
+})();

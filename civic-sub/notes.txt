@@ -1,0 +1,3 @@
+decidim.js is full transformation, others not
+
+new folders not in original layout: adapters/ingest substrate/engine 
