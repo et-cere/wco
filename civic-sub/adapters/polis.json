@@ -1,0 +1,11 @@
+{
+  "source": "polis",
+  "version": "0.1",
+  "maps": {
+    "comment": "core/comment",
+    "participant": "actors/actor",
+    "statement": "core/comment",
+    "cluster": "core/topic"
+  },
+  "notes": "Polis clusters become topics or subtopics; statements map to comments."
+}

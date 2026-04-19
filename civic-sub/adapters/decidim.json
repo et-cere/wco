@@ -1,0 +1,13 @@
+{
+  "source": "decidim",
+  "version": "0.1",
+  "maps": {
+    "participatory_process": "processes/process",
+    "proposal": "core/proposal",
+    "meeting": "processes/meeting",
+    "result": "core/decision",
+    "user": "actors/actor",
+    "organization": "actors/organization"
+  },
+  "notes": "Decidim processes and meetings map directly to substrate processes."
+}

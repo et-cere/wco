@@ -1,0 +1,12 @@
+{
+  "source": "democracyos",
+  "version": "0.1",
+  "maps": {
+    "topic": "core/topic",
+    "proposal": "core/proposal",
+    "comment": "core/comment",
+    "vote": "governance/vote",
+    "user": "actors/actor"
+  },
+  "notes": "DemocracyOS maps cleanly to proposals, comments, and votes."
+}

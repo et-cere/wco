@@ -1,0 +1,11 @@
+{
+  "source": "osm",
+  "version": "0.1",
+  "maps": {
+    "node": "wco/wco-node",
+    "way": "wco/wco-link",
+    "relation": "governance/jurisdiction",
+    "tag": "artifacts/tag"
+  },
+  "notes": "OSM nodes and ways map naturally to WCO nodes and links."
+}

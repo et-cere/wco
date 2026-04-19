@@ -1,0 +1,11 @@
+{
+  "source": "wco",
+  "version": "0.1",
+  "maps": {
+    "country": "wco/wco-country",
+    "slot": "wco/wco-slot",
+    "node": "wco/wco-node",
+    "link": "wco/wco-link"
+  },
+  "notes": "Direct mapping from WCO schema to substrate types."
+}
