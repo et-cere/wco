@@ -1,0 +1,10 @@
+wco-extension/
+  manifest.json
+  background.js
+  content.js
+  bridge.js
+  popup.html
+  popup.js
+  styles.css
+  config/
+    substrate-extension-config.json

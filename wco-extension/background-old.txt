@@ -1,0 +1,50 @@
+let config = {
+  enable_intelligence: false,
+  intel_bundle_url: null,
+  viewer_url: null,
+};
+
+chrome.runtime.onInstalled.addListener(() => {
+  loadConfig();
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "CIVIC_SIGNAL") {
+    handleCivicSignal(msg.payload);
+    sendResponse({ ok: true });
+  }
+});
+
+async function loadConfig() {
+  try {
+    const res = await fetch(chrome.runtime.getURL("config/substrate-extension-config.json"));
+    if (res.ok) {
+      config = await res.json();
+      if (config.enable_intelligence && config.intel_bundle_url) {
+        await loadIntelBundle(config.intel_bundle_url);
+      }
+    }
+  } catch (e) {
+    // keep defaults
+  }
+}
+
+async function loadIntelBundle(url) {
+  try {
+    const res = await fetch(url);
+    const code = await res.text();
+    // eslint-disable-next-line no-eval
+    eval(code);
+    console.log("[WCO Extension] Intelligence layer loaded.");
+  } catch (e) {
+    console.warn("[WCO Extension] Failed to load intel bundle:", e);
+  }
+}
+
+function handleCivicSignal(signal) {
+  // For now, just store locally; later you can POST to a backend or export.
+  chrome.storage.local.get({ civicPulse: [] }, (data) => {
+    const updated = data.civicPulse.concat([signal]);
+    chrome.storage.local.set({ civicPulse: updated });
+  });
+}
