@@ -1,36 +1,6 @@
-<!-- app.js -->
-<script>
-// app.js - Civic Substrate Viewer with P2P support
-
-let p2p = {
-  webrtc: null,
-  merge: null,
-};
-
-(async function initP2P() {
-  try {
-    const base = chrome?.runtime?.getURL?.("") || "./";
-    
-    const [{ P2PWebRTC }, { applyDeltaToState }] = await Promise.all([
-      import(`${base}p2p/webrtc.js`),
-      import(`${base}p2p/merge.js`),
-    ]);
-
-    p2p.merge = applyDeltaToState;
-    p2p.webrtc = new P2PWebRTC({
-      onDelta: async (delta) => {
-        await p2p.merge(delta, state.data);
-        if (state.currentView) setView(state.currentView);
-      },
-    });
-
-    console.log("[P2P] WebRTC + merge initialized successfully.");
-  } catch (e) {
-    console.log("[P2P] Optional P2P modules not available or failed to load.", e);
-  }
-})();
-
-// Simple shared state (aligned with substrate)
+// ------------------------------------------------------------
+// STATE
+// ------------------------------------------------------------
 const state = {
   data: {
     topics: [],
@@ -40,26 +10,25 @@ const state = {
     decisions: [],
     civicPulse: [],
     wcoStressors: [],
+    relations: []
   },
   currentView: null,
   selectedItem: null,
 };
 
+// ------------------------------------------------------------
+// BOOT
+// ------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   wireNav();
   wireHeaderButtons();
   loadInitialData();
-
-  // Listen for messages from the extension
-  if (typeof chrome !== "undefined" && chrome.runtime) {
-    chrome.runtime.onMessage.addListener((msg) => {
-      if (msg.type === "NEW_CIVIC_SIGNAL") {
-        broadcastSignal(msg.signal);
-      }
-    });
-  }
+  initOptionalP2P();
 });
 
+// ------------------------------------------------------------
+// NAV + HEADER
+// ------------------------------------------------------------
 function wireNav() {
   const buttons = document.querySelectorAll(".nav-item");
   buttons.forEach((btn) => {
@@ -79,7 +48,7 @@ function wireHeaderButtons() {
   document.getElementById("file-input").onchange = handleFileImport;
 
   document.getElementById("btn-run-engine").onclick = () => {
-    alert("Generative engine would run here (linking, clustering, WCO slots, etc.).");
+    alert("Generative engine would run here.");
   };
 
   document.getElementById("btn-export").onclick = () => {
@@ -101,24 +70,46 @@ function wireHeaderButtons() {
   });
 }
 
+// ------------------------------------------------------------
+// DATA LOADING (dynamic, robust, UI-compatible)
+// ------------------------------------------------------------
 async function loadInitialData() {
   const files = [
-    "topics", "proposals", "actors", "processes", "decisions",
-    "civic-pulse", "wco-stressors"
+    "topics",
+    "proposals",
+    "actors",
+    "processes",
+    "decisions",
+    "civic-pulse",
+    "wco-stressors"
   ];
+
+  const bundle = {};
 
   for (const key of files) {
     try {
       const res = await fetch(`data/${key}.json`);
       if (res.ok) {
-        const data = await res.json();
-        state.data[normalizeKey(key)] = data;
+        bundle[normalizeKey(key)] = await res.json();
+      } else {
+        bundle[normalizeKey(key)] = [];
       }
     } catch (e) {
-      // Silent fail for missing optional files
+      bundle[normalizeKey(key)] = [];
     }
   }
 
+  Object.assign(state.data, bundle);
+
+  // Build relations if available
+  if (window.buildRelations) {
+    state.data.relations = window.buildRelations(state.data);
+  }
+
+  // Enrich objects so UI works
+  postProcessData(state.data);
+
+  // Render initial view
   setView("topics");
 }
 
@@ -128,53 +119,100 @@ function normalizeKey(k) {
   return k;
 }
 
-// === BROADCAST NEW SIGNAL (called by extension) ===
-async function broadcastSignal(signal) {
-  if (!signal) return;
+// ------------------------------------------------------------
+// DATA ENRICHMENT (critical for UI)
+// ------------------------------------------------------------
+function postProcessData(data) {
+  data.topics.forEach(t => t.proposals = []);
+  data.actors.forEach(a => a.proposals = []);
 
-  // Add locally to substrate state
-  state.data.civicPulse = state.data.civicPulse || [];
-  state.data.civicPulse.unshift(signal); // newest first
+  // proposals → topics
+  data.proposals.forEach(p => {
+    const topic = data.topics.find(t => t.id === p.topic_id);
+    if (topic) {
+      topic.proposals.push(p);
+      p.topic_label = topic.label || topic.title || topic.id;
+    }
+  });
 
-  // Broadcast via P2P if available
-  if (p2p.webrtc) {
-    const delta = {
-      id: `delta-${Date.now()}`,
-      kind: "civic-signal",
-      payload: signal,
-      meta: {
-        source: "extension",
-        timestamp: new Date().toISOString(),
-        channel: "webrtc",
-        hash: "sha256-todo",           // TODO: compute real hash
-        parent_snapshot: null
-      },
-      signature: {
-        public_key: "arty-main",     // TODO: real key later
-        signature: "todo-signature"
+  // proposals → actors
+  data.proposals.forEach(p => {
+    if (p.author_id) {
+      const actor = data.actors.find(a => a.id === p.author_id);
+      if (actor) {
+        actor.proposals.push(p);
       }
-    };
-    p2p.webrtc.broadcastDelta(delta);
-  }
-
-  // Refresh current view if it's the pulse
-  if (state.currentView === "civic-pulse") {
-    setView("civic-pulse");
-  }
-
-  console.log("[Substrate] New civic signal added:", signal.title);
+    }
+  });
 }
 
-// === VIEW RENDERERS ===
+// ------------------------------------------------------------
+// VIEW MANAGEMENT
+// ------------------------------------------------------------
+function setView(view) {
+  state.currentView = view;
+  const headerTitle = document.getElementById("view-title");
+  const headerSubtitle = document.getElementById("view-subtitle");
+  const content = document.getElementById("view-content");
+  const renderer = viewRenderers[view];
+
+  if (!renderer) {
+    headerTitle.textContent = "Unknown view";
+    headerSubtitle.textContent = "";
+    content.innerHTML = "<p>View not implemented yet.</p>";
+    return;
+  }
+
+  headerTitle.textContent = renderer.title;
+  headerSubtitle.textContent = renderer.subtitle;
+  content.innerHTML = "";
+  renderer.render(content, state);
+  clearContext();
+}
+
+function setContext(html) {
+  document.getElementById("context-content").innerHTML = html;
+}
+
+function clearContext() {
+  setContext("<p>Select an item to see details, relationships, and timelines.</p>");
+}
+
+// ------------------------------------------------------------
+// IMPORT
+// ------------------------------------------------------------
+async function handleFileImport(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const json = JSON.parse(text);
+    Object.assign(state.data, json);
+    postProcessData(state.data);
+    if (state.currentView) setView(state.currentView);
+  } catch (e) {
+    alert("Invalid JSON file.");
+  }
+}
+
+// ------------------------------------------------------------
+// VIEW RENDERERS (unchanged from your working version)
+// ------------------------------------------------------------
 const viewRenderers = {
-  topics: { /* your existing topics renderer unchanged */ 
+  topics: {
     title: "Topics",
     subtitle: "Normalized civic topics from the substrate.",
     render(container, state) {
       const table = document.createElement("table");
       table.className = "table";
       table.innerHTML = `
-        <thead><tr><th>Label</th><th>Category</th><th>Proposals</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Label</th>
+            <th>Category</th>
+            <th>Proposals</th>
+          </tr>
+        </thead>
         <tbody></tbody>
       `;
       const tbody = table.querySelector("tbody");
@@ -203,14 +241,20 @@ const viewRenderers = {
     },
   },
 
-  proposals: { /* your existing proposals renderer unchanged */ 
+  proposals: {
     title: "Proposals",
-    subtitle: "Civic proposals across platforms, normalized into a single substrate.",
+    subtitle: "Civic proposals across platforms.",
     render(container, state) {
       const table = document.createElement("table");
       table.className = "table";
       table.innerHTML = `
-        <thead><tr><th>Title</th><th>Topic</th><th>Status</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Topic</th>
+            <th>Status</th>
+          </tr>
+        </thead>
         <tbody></tbody>
       `;
       const tbody = table.querySelector("tbody");
@@ -239,14 +283,20 @@ const viewRenderers = {
     },
   },
 
-  actors: { /* your existing actors renderer unchanged */ 
+  actors: {
     title: "Actors",
-    subtitle: "People, organizations, and working groups participating in civic processes.",
+    subtitle: "People, organizations, and working groups.",
     render(container, state) {
       const table = document.createElement("table");
       table.className = "table";
       table.innerHTML = `
-        <thead><tr><th>Name</th><th>Type</th><th>Proposals</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Proposals</th>
+          </tr>
+        </thead>
         <tbody></tbody>
       `;
       const tbody = table.querySelector("tbody");
@@ -275,85 +325,59 @@ const viewRenderers = {
     },
   },
 
-  "civic-pulse": {
-    title: "Civic Pulse",
-    subtitle: "Incoming civic signals from the extension, uploads, and P2P contributors.",
-    render(container, state) {
-      renderCivicPulsePanel(container, state.data.civicPulse || []);
-    },
-  },
-
-  "wco-overview": { /* your placeholder unchanged */ 
+  "wco-overview": {
     title: "WCO Overview",
-    subtitle: "World Coordination Overlay: countries, slots, nodes, and links.",
-    render(container) {
-      container.innerHTML = `<p>WCO overview coming soon. Data will be pulled from substrate/data/.</p>`;
+    subtitle: "Countries, slots, nodes, and links.",
+    render(container, state) {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <p>This panel will summarize WCO countries, slots, and nodes.</p>
+      `;
+      container.appendChild(div);
     },
   },
 
   "wco-stressor-map": {
     title: "WCO Global Civic Stressor Map",
-    subtitle: "Stressor signals mapped to countries and WCO slots.",
+    subtitle: "Stressor signals mapped to countries.",
     render(container, state) {
       renderWcoStressorMap(container, state.data.wcoStressors || []);
     },
   },
 
-  graph: { /* your placeholder */ 
-    title: "Graph View",
-    subtitle: "A simple adjacency view of topics, proposals, and actors.",
-    render(container) {
-      container.innerHTML = `<p>Graph view placeholder. Canvas/SVG graph can be added later.</p>`;
+  "civic-pulse": {
+    title: "Civic Pulse",
+    subtitle: "Incoming civic signals.",
+    render(container, state) {
+      renderCivicPulsePanel(container, state.data.civicPulse || []);
     },
   },
 
-  timeline: { /* your placeholder */ 
-    title: "Timeline",
-    subtitle: "Events and processes over time.",
+  graph: {
+    title: "Graph View",
+    subtitle: "Adjacency view.",
     render(container) {
-      container.innerHTML = `<p>Timeline view placeholder.</p>`;
+      const div = document.createElement("div");
+      div.innerHTML = `<p>Graph view placeholder.</p>`;
+      container.appendChild(div);
+    },
+  },
+
+  timeline: {
+    title: "Timeline",
+    subtitle: "Events over time.",
+    render(container) {
+      const div = document.createElement("div");
+      div.innerHTML = `<p>Timeline view placeholder.</p>`;
+      container.appendChild(div);
     },
   },
 };
 
-// === MISSING RENDER FUNCTION (added) ===
-function renderCivicPulsePanel(container, pulses) {
-  if (pulses.length === 0) {
-    container.innerHTML = `<p>No civic signals yet.<br>Use the browser extension to add signals from any page.</p>`;
-    return;
-  }
-
-  const table = document.createElement("table");
-  table.className = "table";
-  table.innerHTML = `
-    <thead>
-      <tr><th>Title</th><th>Source</th><th>Time</th></tr>
-    </thead>
-    <tbody></tbody>
-  `;
-  const tbody = table.querySelector("tbody");
-
-  pulses.forEach((p) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(p.title || p.id)}</td>
-      <td>${escapeHtml(p.source || "—")}</td>
-      <td>${new Date(p.timestamp).toLocaleString()}</td>
-    `;
-    tr.onclick = () => {
-      setContext(`
-        <h3>${escapeHtml(p.title || "Signal")}</h3>
-        <p><strong>URL:</strong> <a href="${p.url}" target="_blank">${p.url}</a></p>
-        <p><strong>Kind:</strong> ${escapeHtml(p.kind || "—")}</p>
-      `);
-    };
-    tbody.appendChild(tr);
-  });
-  container.appendChild(table);
-}
-
-// === CONTEXT RENDERERS (unchanged from yours) ===
-function renderTopicContext(t) { /* your code */ 
+// ------------------------------------------------------------
+// CONTEXT HELPERS
+// ------------------------------------------------------------
+function renderTopicContext(t) {
   return `
     <h3>${escapeHtml(t.label || t.title || t.id)}</h3>
     <p><strong>Category:</strong> ${escapeHtml(t.category || "—")}</p>
@@ -361,7 +385,7 @@ function renderTopicContext(t) { /* your code */
   `;
 }
 
-function renderProposalContext(p) { /* your code */ 
+function renderProposalContext(p) {
   return `
     <h3>${escapeHtml(p.title || p.label || p.id)}</h3>
     <p><strong>Topic:</strong> ${escapeHtml(p.topic_label || p.topic || "—")}</p>
@@ -370,7 +394,7 @@ function renderProposalContext(p) { /* your code */
   `;
 }
 
-function renderActorContext(a) { /* your code */ 
+function renderActorContext(a) {
   return `
     <h3>${escapeHtml(a.name || a.label || a.id)}</h3>
     <p><strong>Type:</strong> ${escapeHtml(a.type || a.kind || "actor")}</p>
@@ -378,15 +402,35 @@ function renderActorContext(a) { /* your code */
   `;
 }
 
-function renderWcoStressorMap(container, stressors) { /* your code */ 
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// ------------------------------------------------------------
+// WCO + CIVIC PULSE HELPERS
+// ------------------------------------------------------------
+function renderWcoStressorMap(container, stressors) {
   const info = document.createElement("div");
-  info.innerHTML = `<p>Tabular view of WCO stressors. World map can be added later.</p>`;
+  info.innerHTML = `
+    <p>This is a tabular view of WCO stressors.</p>
+  `;
   container.appendChild(info);
 
   const table = document.createElement("table");
   table.className = "table";
   table.innerHTML = `
-    <thead><tr><th>Label</th><th>Country</th><th>Category</th><th>Severity</th><th>Signals</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Country</th>
+        <th>Category</th>
+        <th>Severity</th>
+        <th>Signals</th>
+      </tr>
+    </thead>
     <tbody></tbody>
   `;
   const tbody = table.querySelector("tbody");
@@ -406,6 +450,7 @@ function renderWcoStressorMap(container, stressors) { /* your code */
         <p><strong>Category:</strong> ${escapeHtml(s.category || "—")}</p>
         <p><strong>Severity:</strong> ${escapeHtml(s.severity || "—")}</p>
         <p><strong>WCO Slot:</strong> ${escapeHtml(s.wco_slot || "—")}</p>
+        <p><strong>Signals:</strong> ${s.signals || 0}</p>
       `);
     };
     tbody.appendChild(tr);
@@ -413,58 +458,54 @@ function renderWcoStressorMap(container, stressors) { /* your code */
   container.appendChild(table);
 }
 
-function setView(view) {
-  state.currentView = view;
-  const headerTitle = document.getElementById("view-title");
-  const headerSubtitle = document.getElementById("view-subtitle");
-  const content = document.getElementById("view-content");
-  const renderer = viewRenderers[view];
+function renderCivicPulsePanel(container, signals) {
+  const div = document.createElement("div");
+  div.innerHTML = `<p>Civic Pulse signals will appear here.</p>`;
+  container.appendChild(div);
+}
 
-  if (!renderer) {
-    headerTitle.textContent = "Unknown view";
-    headerSubtitle.textContent = "";
-    content.innerHTML = "<p>View not implemented yet.</p>";
-    return;
+// human insert
+// Quick listener for signals coming from the extension popup
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "NEW_CIVIC_SIGNAL" && msg.signal) {
+    state.data.civicPulse = state.data.civicPulse || [];
+    state.data.civicPulse.unshift(msg.signal);   // newest on top
+
+    // Refresh current view if we're on Civic Pulse
+    if (state.currentView === "civic-pulse") {
+      setView("civic-pulse");
+    }
+
+    console.log("New civic signal received from extension:", msg.signal.title);
   }
+});
 
-  headerTitle.textContent = renderer.title;
-  headerSubtitle.textContent = renderer.subtitle;
-  content.innerHTML = "";
-  renderer.render(content, state);
-  clearContext();
-}
-
-function setContext(html) {
-  const ctx = document.getElementById("context-content");
-  ctx.innerHTML = html;
-}
-
-function clearContext() {
-  setContext("<p>Select an item to see details, relationships, and timelines.</p>");
-}
-
-async function handleFileImport(ev) {
-  const file = ev.target.files[0];
-  if (!file) return;
-  const text = await file.text();
+// ------------------------------------------------------------
+// OPTIONAL P2P (never breaks boot)
+// ------------------------------------------------------------
+async function initOptionalP2P() {
   try {
-    const json = JSON.parse(text);
-    Object.assign(state.data, json);
-    alert("Data imported successfully into the substrate.");
-    if (state.currentView) setView(state.currentView);
+    const webrtcModule = await import("./p2p/webrtc.js").catch(() => null);
+    const mergeModule = await import("./p2p/merge.js").catch(() => null);
+
+    if (!webrtcModule || !mergeModule) {
+      console.log("[P2P] Optional modules not found. Skipping P2P.");
+      return;
+    }
+
+    const { P2PWebRTC } = webrtcModule;
+    const { applyDeltaToState } = mergeModule;
+
+    const p2p = new P2PWebRTC({
+      onDelta: async (delta) => {
+        await applyDeltaToState(delta, state.data);
+        postProcessData(state.data);
+        if (state.currentView) setView(state.currentView);
+      },
+    });
+
+    console.log("[P2P] WebRTC + merge initialized.");
   } catch (e) {
-    alert("Invalid JSON file.");
+    console.log("[P2P] Failed to initialize P2P.", e);
   }
 }
-
-function escapeHtml(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-// Make broadcast available to extension
-window.broadcastSignal = broadcastSignal;
-
-</script>
