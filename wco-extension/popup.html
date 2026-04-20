@@ -4,14 +4,35 @@
   <meta charset="UTF-8" />
   <title>WCO Civic Substrate</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { width: 340px; margin:0; padding:16px; font-family: system-ui, sans-serif; background:#0b0d14; color:#f5f7ff; }
+    h1 { margin:0 0 16px 0; text-align:center; font-size:18px; }
+    button { 
+      width: 100%; 
+      padding: 12px; 
+      margin: 8px 0; 
+      font-size: 14px; 
+      background: #151827; 
+      color: white; 
+      border: 1px solid #4fd1c5; 
+      border-radius: 6px; 
+      cursor: pointer;
+    }
+    button:hover { background: #1f2438; }
+    .hint { font-size: 12px; color: #9ca3b5; text-align: center; margin-top: 12px; }
+  </style>
 </head>
 <body>
-  <div class="popup">
-    <h1>WCO Civic Substrate</h1>
-    <button id="btn-add-signal">Add civic signal from this page</button>
-    <button id="btn-open-viewer">Open viewer</button>
-    <p class="hint">Signals are stored locally and can be exported into the Civic Pulse JSON.</p>
+  <h1>WCO Civic Substrate</h1>
+  
+  <button id="btn-add-signal">📌 Add Civic Signal from this Page</button>
+  <button id="btn-open-viewer">🌐 Open Civic Substrate Viewer</button>
+  <button id="btn-export-pulse">📤 Export My Civic Pulse</button>
+
+  <div class="hint">
+    Signals saved locally • P2P ready when viewer is open
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

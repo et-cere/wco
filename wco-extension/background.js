@@ -46,34 +46,42 @@ async function loadIntelBundle(url) {
 async function handleCivicSignal(signal) {
   if (!signal) return;
 
-  // 1. Store locally (existing behavior)
-  chrome.storage.local.get({ civicPulse: [] }, (data) => {
-    const updated = data.civicPulse.concat([signal]);
+  // 1. Save to local storage
+  chrome.storage.local.get({ civicPulse: [] }, (result) => {
+    const updated = [...result.civicPulse, signal];
     chrome.storage.local.set({ civicPulse: updated });
   });
 
-  // 2. Forward to open viewer tab (new tight integration)
-  try {
-    const tabs = await chrome.tabs.query({ url: "*://*/*" }); // broad search
+  // 2. Try to forward to any open viewer tab (more reliable)
+  const tabs = await chrome.tabs.query({});
 
-    for (const tab of tabs) {
-      if (tab.url && tab.url.includes("civic-substrate") || tab.url.includes("wco-sub.wco.workers.dev")) { 
-        // Adjust the condition to match your viewer_url or index.html path
-        try {
-          await chrome.tabs.sendMessage(tab.id, {
-            type: "NEW_CIVIC_SIGNAL",
-            signal: signal
-          });
-          console.log("[WCO Extension] Signal forwarded to viewer tab:", tab.id);
-          break; // send to first matching viewer
-        } catch (e) {
-          // tab not listening or closed
-        }
+  let forwarded = false;
+
+  for (const tab of tabs) {
+    if (!tab.id) continue;
+
+    const isLikelyViewer = 
+      tab.url?.includes("civic-substrate") || 
+      tab.url?.includes("wco") || 
+      tab.url?.includes("index.html") ||
+      tab.url?.startsWith("chrome-extension://" + chrome.runtime.id);
+
+    if (isLikelyViewer) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, {
+          type: "NEW_CIVIC_SIGNAL",
+          signal: signal
+        });
+        console.log(`[WCO] Signal forwarded to viewer tab ${tab.id}`);
+        forwarded = true;
+        break;   // only send to first matching tab
+      } catch (err) {
+        // tab not listening — continue
       }
     }
-  } catch (e) {
-    console.log("[WCO Extension] No open viewer tab found (that's ok).");
   }
 
-  console.log("[WCO Extension] Civic signal captured:", signal.title || signal.id);
+  if (!forwarded) {
+    console.log("[WCO] Signal saved locally (no viewer tab open)");
+  }
 }
