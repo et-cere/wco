@@ -1,0 +1,7 @@
+{
+  "name": "wco-v2-framework",
+  "version": "0.1.0",
+  "description": "Modular, decentralized framework for WCO nodes and adapters",
+  "schemasVersion": "1.0.0",
+  "adapterSpecVersion": "1.0.0"
+}
