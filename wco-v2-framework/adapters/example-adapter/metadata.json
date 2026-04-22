@@ -1,0 +1,9 @@
+{
+  "id": "example-adapter",
+  "version": "0.1.0",
+  "name": "Example Adapter",
+  "description": "A minimal example adapter for WCO v2",
+  "author": "et-cere",
+  "trust_level": "community",
+  "api_endpoints": ["ingest"]
+}
