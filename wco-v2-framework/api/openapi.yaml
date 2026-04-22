@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: WCO Node API
+  version: "0.1.0"
+paths:
+  /health:
+    get:
+      summary: Node health
+      responses:
+        '200':
+          description: ok
+  /adapters:
+    get:
+      summary: list installed adapters
+      responses:
+        '200':
+          description: adapter list
+  /signals:
+    post:
+      summary: submit a civic signal
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: created
